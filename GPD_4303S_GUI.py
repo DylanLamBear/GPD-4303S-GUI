@@ -17,10 +17,14 @@ Other Python Modules To Install Beyond (PyVISA, PyVISA-py, PyUSB) (Likely will n
 """
 
 import sys
+import time
+import threading
 from PyQt6 import QtWidgets
+from PyQt6.QtCore import QThread, QObject, pyqtSignal, QTimer
 from PyQt6.QtGui import QCloseEvent
 import pyvisa
 import GPD_4303S_GUI_UI
+
 
 class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
     def __init__(self):
@@ -30,10 +34,147 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.RM = pyvisa.ResourceManager("@py")
         self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR')
         self.GPD_4303S_RM.baud_rate = 115200
-        self.ReadState()
+        self.ReadState() # Read Out Information About the connected GPD-4303S power supply
         self.IdentifyPS()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.MeasureOutputs)
         self.actionExit.triggered.connect(self.GUI_Shutdown)
+        self.pushButtonOutput.clicked.connect(self.OutputToggle)
+        self.actionReset.triggered.connect(self.PSReset)
+        self.pushButtonV1Set.clicked.connect(self.V1Set)
+        self.pushButtonV2Set.clicked.connect(self.V2Set)
+        self.pushButtonV3Set.clicked.connect(self.V3Set)
+        self.pushButtonV4Set.clicked.connect(self.V4Set)
+        self.pushButtonA1Set.clicked.connect(self.A1Set)
+        self.pushButtonA2Set.clicked.connect(self.A2Set)
+        self.pushButtonA3Set.clicked.connect(self.A3Set)
+        self.pushButtonA4Set.clicked.connect(self.A4Set)
+        
+    def A1Set(self):
+        UserInput = self.lineEditA1IN.text()
+        self.lineEditA1IN.clear()
+        self.textEditMSG.setText("SET A1")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("ISET1:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid A1 Input")
+    
+    def A2Set(self):
+        UserInput = self.lineEditA2IN.text()
+        self.lineEditA2IN.clear()
+        self.textEditMSG.setText("SET A3")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("ISET2:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid A2 Input")
 
+    def A3Set(self):
+        UserInput = self.lineEditA3IN.text()
+        self.lineEditA3IN.clear()
+        self.textEditMSG.setText("SET A3")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("ISET3:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid A3 Input")
+
+    def A4Set(self):
+        UserInput = self.lineEditA4IN.text()
+        self.lineEditA4IN.clear()
+        self.textEditMSG.setText("SET A4")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("ISET4:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid A4 Input")
+
+    def V1Set(self):
+        UserInput = self.lineEditV1IN.text()
+        self.lineEditV1IN.clear()
+        self.textEditMSG.setText("SET V1")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("VSET1:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid V1 Input")
+
+    def V2Set(self):
+        UserInput = self.lineEditV2IN.text()
+        self.lineEditV2IN.clear()
+        self.textEditMSG.setText("SET V2")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("VSET2:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid V2 Input")
+
+    def V3Set(self):
+        UserInput = self.lineEditV3IN.text()
+        self.lineEditV3IN.clear()
+        self.textEditMSG.setText("SET V3")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("VSET3:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid V3 Input")
+
+    def V4Set(self):
+        UserInput = self.lineEditV4IN.text()
+        self.lineEditV4IN.clear()
+        self.textEditMSG.setText("SET V4")
+        try:
+            InputFloat = float(UserInput)
+            InputFloat = round(InputFloat, 3)
+            self.GPD_4303S_RM.write("VSET4:" + str(InputFloat))
+        except:
+            self.textEditMSG.setText("Invalid V4 Input")
+
+    def OutputToggle(self):
+        if(self.PSstate["Output"] == "OFF"):
+            self.GPD_4303S_RM.write("OUT1")
+            self.timer.start(1000)
+            self.textEditMSG.setText("Output ON")
+        elif(self.PSstate["Output"] == "ON"):
+            self.GPD_4303S_RM.write("OUT0")
+            self.textEditMSG.setText("Output OFF")
+            self.timer.stop()
+            self.lineEditA1.clear()
+            self.lineEditA2.clear()
+            self.lineEditA3.clear()
+            self.lineEditA4.clear()
+            self.lineEditV1.clear()
+            self.lineEditV2.clear()
+            self.lineEditV3.clear()
+            self.lineEditV4.clear()
+        self.ReadState()
+
+    def MeasureOutputs(self):
+        Voltage1 = self.GPD_4303S_RM.query("VOUT1?")[:5]
+        Voltage2 = self.GPD_4303S_RM.query("VOUT2?")[:5]
+        Voltage3 = self.GPD_4303S_RM.query("VOUT3?")[:5]
+        Voltage4 = self.GPD_4303S_RM.query("VOUT4?")[:5]
+        Current1 = self.GPD_4303S_RM.query("IOUT1?")[:5]
+        Current2 = self.GPD_4303S_RM.query("IOUT2?")[:5]
+        Current3 = self.GPD_4303S_RM.query("IOUT3?")[:5]
+        Current4 = self.GPD_4303S_RM.query("IOUT4?")[:5]
+        self.lineEditV1.setText(str(Voltage1))
+        self.lineEditV2.setText(str(Voltage2))
+        self.lineEditV3.setText(str(Voltage3))
+        self.lineEditV4.setText(str(Voltage4))
+        self.lineEditA1.setText(str(Current1))
+        self.lineEditA2.setText(str(Current2))
+        self.lineEditA3.setText(str(Current3))
+        self.lineEditA4.setText(str(Current4))
+    
     def ReadState(self):
         Status = self.GPD_4303S_RM.query('STATUS?')
         # Power Supply Channel Control Mode Status
@@ -103,6 +244,8 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             self.tableWidget.setItem(9,1,QtWidgets.QTableWidgetItem(self.PSstate["FWVer"])) # FWVer
 
     def GUI_Shutdown(self): # Close the UI after stopping PyVISA services
+        if(self.PSstate["Output"] == "ON"): # On exit, if power supply is on, turn off output
+            self.GPD_4303S_RM.write("OUT0")
         self.GPD_4303S_RM.close()
         self.RM.close()
         self.close()
