@@ -29,17 +29,29 @@ import GPD_4303S_GUI_UI
 class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        self.PSstate = {}# No need to initalize, the power supply will tell us this
+        self.PSstate = {} # No need to initalize, the power supply will tell us this
+        self.ChannelSettings = {} # Necessary to initialize
+        self.SavedSettings = [{},{},{},{}] # Create a lit of dictionaries that is the saved memory settings
         self.setupUi(self)
         self.RM = pyvisa.ResourceManager("@py")
         self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR')
         self.GPD_4303S_RM.baud_rate = 115200
         self.ReadState() # Read Out Information About the connected GPD-4303S power supply
         self.IdentifyPS()
+        self.PSReset() # Channel Settings Initialized Here
+        self.UpdateSettingInterface()
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.MeasureOutputs)
         self.actionExit.triggered.connect(self.GUI_Shutdown)
         self.pushButtonOutput.clicked.connect(self.OutputToggle)
+        self.actionSave_State_1.triggered.connect(self.SaveState1)
+        self.actionSave_State_2.triggered.connect(self.SaveState2)
+        self.actionSave_State_3.triggered.connect(self.SaveState3)
+        self.actionSave_State_4.triggered.connect(self.SaveState4)
+        self.actionLoad_State_1.triggered.connect(self.LoadState1)
+        self.actionLoad_State_2.triggered.connect(self.LoadState2)
+        self.actionLoad_State_3.triggered.connect(self.LoadState3)
+        self.actionLoad_State_4.triggered.connect(self.LoadState4)
         self.actionReset.triggered.connect(self.PSReset)
         self.pushButtonV1Set.clicked.connect(self.V1Set)
         self.pushButtonV2Set.clicked.connect(self.V2Set)
@@ -49,7 +61,73 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.pushButtonA2Set.clicked.connect(self.A2Set)
         self.pushButtonA3Set.clicked.connect(self.A3Set)
         self.pushButtonA4Set.clicked.connect(self.A4Set)
-        
+
+    def LoadState1(self):
+        self.GPD_4303S_RM.write("RCL1")
+        self.textEditMSG.setText("LOADED STATE1")
+        self.ChannelSettings = self.SavedSettings[0].copy()
+        self.UpdateSettingInterface()
+
+    def LoadState2(self):
+        self.GPD_4303S_RM.write("RCL2")
+        self.textEditMSG.setText("LOADED STATE2")
+        self.ChannelSettings = self.SavedSettings[1].copy()
+        self.UpdateSettingInterface()
+
+    def LoadState3(self):
+        self.GPD_4303S_RM.write("RCL3")
+        self.textEditMSG.setText("LOADED STATE3")
+        self.ChannelSettings = self.SavedSettings[2].copy()
+        self.UpdateSettingInterface()
+
+    def LoadState4(self):
+        self.GPD_4303S_RM.write("RCL4")
+        self.textEditMSG.setText("LOADED STATE4")
+        self.ChannelSettings = self.SavedSettings[3].copy()
+        self.UpdateSettingInterface()
+
+    def SaveState1(self):
+        self.GPD_4303S_RM.write("SAV1")
+        self.textEditMSG.setText("SAVED TO STATE1")
+        self.SavedSettings[0] = self.ChannelSettings.copy()
+
+    def SaveState2(self):
+        self.GPD_4303S_RM.write("SAV2")
+        self.textEditMSG.setText("SAVED TO STATE2")
+        self.SavedSettings[1] = self.ChannelSettings.copy()
+    
+    def SaveState3(self):
+        self.GPD_4303S_RM.write("SAV3")
+        self.textEditMSG.setText("SAVED TO STATE3")
+        self.SavedSettings[2] = self.ChannelSettings.copy()
+
+    def SaveState4(self):
+        self.GPD_4303S_RM.write("SAV4")
+        self.textEditMSG.setText("SAVED TO STATE4")
+        self.SavedSettings[3] = self.ChannelSettings.copy()
+
+    def PSReset(self): # set both the amp limit setting and voltage setting for all channels to zero
+        if(self.PSstate["Output"] == "ON"): # On exit, if power supply is on, turn off output
+            self.OutputToggle()
+        self.GPD_4303S_RM.write("ISET1:0") # Set All Current and Voltage Channels to Zero
+        self.GPD_4303S_RM.write("ISET2:0")
+        self.GPD_4303S_RM.write("ISET3:0")
+        self.GPD_4303S_RM.write("ISET4:0")
+        self.GPD_4303S_RM.write("VSET1:0")
+        self.GPD_4303S_RM.write("VSET2:0")
+        self.GPD_4303S_RM.write("VSET3:0")
+        self.GPD_4303S_RM.write("VSET4:0")
+        self.ChannelSettings["V1"] = 0.0
+        self.ChannelSettings["V2"] = 0.0
+        self.ChannelSettings["V3"] = 0.0
+        self.ChannelSettings["V4"] = 0.0
+        self.ChannelSettings["A1"] = 0.0
+        self.ChannelSettings["A2"] = 0.0
+        self.ChannelSettings["A3"] = 0.0
+        self.ChannelSettings["A4"] = 0.0
+        self.UpdateSettingInterface()
+        self.UpdateState()
+
     def A1Set(self):
         UserInput = self.lineEditA1IN.text()
         self.lineEditA1IN.clear()
@@ -58,6 +136,9 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("ISET1:" + str(InputFloat))
+            self.ChannelSettings["A1"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid A1 Input")
     
@@ -69,6 +150,9 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("ISET2:" + str(InputFloat))
+            self.ChannelSettings["A2"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid A2 Input")
 
@@ -80,6 +164,9 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("ISET3:" + str(InputFloat))
+            self.ChannelSettings["A3"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid A3 Input")
 
@@ -91,6 +178,9 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("ISET4:" + str(InputFloat))
+            self.ChannelSettings["A4"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid A4 Input")
 
@@ -102,6 +192,9 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("VSET1:" + str(InputFloat))
+            self.ChannelSettings["V1"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid V1 Input")
 
@@ -113,6 +206,9 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("VSET2:" + str(InputFloat))
+            self.ChannelSettings["V2"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid V2 Input")
 
@@ -124,6 +220,9 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("VSET3:" + str(InputFloat))
+            self.ChannelSettings["V3"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid V3 Input")
 
@@ -135,8 +234,21 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             InputFloat = float(UserInput)
             InputFloat = round(InputFloat, 3)
             self.GPD_4303S_RM.write("VSET4:" + str(InputFloat))
+            self.ChannelSettings["V4"] = str(InputFloat)
+            if(self.PSstate["Output"] == "OFF"):
+                self.UpdateSettingInterface()
         except:
             self.textEditMSG.setText("Invalid V4 Input")
+
+    def UpdateSettingInterface(self):
+        self.lineEditV1.setText(str(self.ChannelSettings["V1"]))
+        self.lineEditV2.setText(str(self.ChannelSettings["V2"]))
+        self.lineEditV3.setText(str(self.ChannelSettings["V3"]))
+        self.lineEditV4.setText(str(self.ChannelSettings["V4"]))
+        self.lineEditA1.setText(str(self.ChannelSettings["A1"]))
+        self.lineEditA2.setText(str(self.ChannelSettings["A2"]))
+        self.lineEditA3.setText(str(self.ChannelSettings["A3"]))
+        self.lineEditA4.setText(str(self.ChannelSettings["A4"]))
 
     def OutputToggle(self):
         if(self.PSstate["Output"] == "OFF"):
@@ -147,14 +259,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             self.GPD_4303S_RM.write("OUT0")
             self.textEditMSG.setText("Output OFF")
             self.timer.stop()
-            self.lineEditA1.clear()
-            self.lineEditA2.clear()
-            self.lineEditA3.clear()
-            self.lineEditA4.clear()
-            self.lineEditV1.clear()
-            self.lineEditV2.clear()
-            self.lineEditV3.clear()
-            self.lineEditV4.clear()
+            self.UpdateSettingInterface()
         self.ReadState()
 
     def MeasureOutputs(self):
@@ -245,7 +350,8 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
 
     def GUI_Shutdown(self): # Close the UI after stopping PyVISA services
         if(self.PSstate["Output"] == "ON"): # On exit, if power supply is on, turn off output
-            self.GPD_4303S_RM.write("OUT0")
+            self.OutputToggle()
+        self.timer.stop()
         self.GPD_4303S_RM.close()
         self.RM.close()
         self.close()
