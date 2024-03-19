@@ -18,7 +18,29 @@ Other Python Modules To Install Beyond (PyVISA, PyVISA-py, PyUSB) (Likely will n
 
 import sys
 from PyQt6 import QtWidgets
+from PyQt6.QtGui import QCloseEvent
 import pyvisa
 import GPD_4303S_GUI_UI
 
+class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        #self.RM = pyvisa.ResourceManager("@py")
+        #self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR')
+        self.actionExit.triggered.connect(self.GUI_Shutdown)
 
+    def GUI_Shutdown(self): # Close the UI after stopping PyVISA services
+        #self.GPD_4303S_RM.close()
+        #self.RM.close()
+        self.close()
+
+    def closeEvent(self, event): # Direct an X button close to the actionExit close
+        self.GUI_Shutdown()
+
+
+if __name__=="__main__": # Send application to computer, wait for user exit
+    app = QtWidgets.QApplication(sys.argv) 
+    GPD_4303S_INST = GPD_4303S()
+    GPD_4303S_INST.show()
+    sys.exit(app.exec())
