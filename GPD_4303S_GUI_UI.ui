@@ -58,7 +58,7 @@
    <widget class="QLabel" name="labelDetials">
     <property name="geometry">
      <rect>
-      <x>60</x>
+      <x>50</x>
       <y>130</y>
       <width>191</width>
       <height>30</height>
@@ -1030,8 +1030,8 @@
      <rect>
       <x>30</x>
       <y>560</y>
-      <width>241</width>
-      <height>51</height>
+      <width>240</width>
+      <height>50</height>
      </rect>
     </property>
     <property name="font">
@@ -1057,15 +1057,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <widget class="QTableWidget" name="tableWidget">
     <property name="geometry">
      <rect>
-      <x>50</x>
+      <x>30</x>
       <y>160</y>
-      <width>200</width>
-      <height>336</height>
+      <width>240</width>
+      <height>356</height>
      </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777215</width>
+      <height>16777215</height>
+     </size>
     </property>
     <property name="font">
      <font>
-      <pointsize>14</pointsize>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="autoScroll">
@@ -1083,6 +1090,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <property name="dragDropOverwriteMode">
      <bool>false</bool>
     </property>
+    <attribute name="horizontalHeaderCascadingSectionResizes">
+     <bool>true</bool>
+    </attribute>
+    <attribute name="horizontalHeaderDefaultSectionSize">
+     <number>180</number>
+    </attribute>
+    <row>
+     <property name="text">
+      <string>Property</string>
+     </property>
+     <property name="font">
+      <font>
+       <bold>true</bold>
+      </font>
+     </property>
+    </row>
     <row>
      <property name="text">
       <string>Output</string>
@@ -1137,8 +1160,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <property name="text">
       <string>State</string>
      </property>
+     <property name="font">
+      <font>
+       <bold>true</bold>
+      </font>
+     </property>
     </column>
-    <item row="3" column="0">
+    <item row="4" column="0">
      <property name="text">
       <string/>
      </property>
