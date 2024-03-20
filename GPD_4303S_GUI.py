@@ -29,17 +29,21 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.PSstate = {} # No need to initalize, the power supply will tell us this
-        self.ChannelSettings = {} # Necessary to initialize
-        self.SavedSettings = [{},{},{},{}] # Create a lit of dictionaries that is the saved memory settings
+        self.ChannelSettings = {} # Current state of the power supply channel, will be initalized
+        self.SavedSettings = [{},{},{},{}] # Create a lit of dictionaries that is the saved memory settings, will fill with data read from power supply
         self.setupUi(self)
-        self.RM = pyvisa.ResourceManager("@py")
-        self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR')
-        self.GPD_4303S_RM.baud_rate = 115200
-        self.ReadState() # Read Out Information About the connected GPD-4303S power supply
-        self.IdentifyPS()
-        self.ReadMemSetting()
+        self.RM = pyvisa.ResourceManager("@py") # VISA wrapper intstance
+        #print(self.RM.list_resources) # use this to find out what resource your computer has designated the power supply to
+        self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR') # What I found the power supply I was working on would show up for me (likely different for you)
+        self.GPD_4303S_RM.baud_rate = 115200 # If you are starting new, you will likely have to change this value (Possible Values: 9600, 57600, 115200)
+        # To modify the baud rate you need to use the current baud rate (Try each of the 3 setting) to set a new baudrate (BAUD0 = 115200, BAUD1 = 57600, BAUD2 = 9600) with the command commented out below
+        # changing the baud rate will disconnect the instance. Once you have changed the baud rate you need to start a new instance with the above ^ ".baudrate = New Baud Rate"
+        #self.GPD_4303S_RM.write("BAUD0") 
+        self.ReadState() # Read Out status information about the connected GPD-4303S power supply
+        self.IdentifyPS() # Read out indentifying information about the connected GPD-4303S power supply
+        self.ReadMemSetting() # Read Memory settings to grab the memory states already on the power supply
         self.PSReset() # Channel Settings Initialized Here
-        self.UpdateSettingInterface()
+        self.UpdateSettingInterface() # Update interface to match the power supply
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.MeasureOutputs)
         self.actionExit.triggered.connect(self.GUI_Shutdown)
@@ -64,7 +68,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.pushButtonA3Set.clicked.connect(self.A3Set)
         self.pushButtonA4Set.clicked.connect(self.A4Set)
 
-    def TrackingChange(self):
+    def TrackingChange(self): # Cycle to the next tracking setting built-into the power supply
         if(self.PSstate["Track"] == "Independent"):
             self.GPD_4303S_RM.write("TRACK1")
         elif(self.PSstate["Track"] == "Series"):
@@ -75,14 +79,14 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             self.textEditMSG.setText("WAIT WHAT?")
         self.ReadState()
     
-    def BeepToggle(self):
+    def BeepToggle(self): # Toggle the beep (Will beep when swapping OFF to ON)
         if(self.PSstate["Beep"] == "OFF"):
             self.GPD_4303S_RM.write("BEEP1")
         elif(self.PSstate["Beep"] == "ON"):
             self.GPD_4303S_RM.write("BEEP0")
         self.ReadState()
 
-    def ReadMemSetting(self):
+    def ReadMemSetting(self): # Cycle through the built in memory to initalize a copy dataset
         for i in range(1,5):
             self.GPD_4303S_RM.write("RCL" + str(i))
             self.SavedSettings[i-1]["V1"] = float(self.GPD_4303S_RM.query("VSET1?")[:-3])
@@ -94,54 +98,54 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             self.SavedSettings[i-1]["A3"] = float(self.GPD_4303S_RM.query("ISET3?")[:-3])
             self.SavedSettings[i-1]["A4"] = float(self.GPD_4303S_RM.query("ISET4?")[:-3])
         
-    def LoadState1(self):
+    def LoadState1(self): # Load State 1 and Send to Interface
         self.GPD_4303S_RM.write("RCL1")
         self.textEditMSG.setText("LOADED STATE1")
         self.ChannelSettings = self.SavedSettings[0].copy()
         self.UpdateSettingInterface()
 
-    def LoadState2(self):
+    def LoadState2(self): # Load State 2 and Send to Interface
         self.GPD_4303S_RM.write("RCL2")
         self.textEditMSG.setText("LOADED STATE2")
         self.ChannelSettings = self.SavedSettings[1].copy()
         self.UpdateSettingInterface()
 
-    def LoadState3(self):
+    def LoadState3(self): # Load State 3 and Send to Interface
         self.GPD_4303S_RM.write("RCL3")
         self.textEditMSG.setText("LOADED STATE3")
         self.ChannelSettings = self.SavedSettings[2].copy()
         self.UpdateSettingInterface()
 
-    def LoadState4(self):
+    def LoadState4(self): # Load State 4 and Send to Interface
         self.GPD_4303S_RM.write("RCL4")
         self.textEditMSG.setText("LOADED STATE4")
         self.ChannelSettings = self.SavedSettings[3].copy()
         self.UpdateSettingInterface()
 
-    def SaveState1(self):
+    def SaveState1(self): # Save Interface State to Save State 1
         self.GPD_4303S_RM.write("SAV1")
         self.textEditMSG.setText("SAVED TO STATE1")
         self.SavedSettings[0] = self.ChannelSettings.copy()
 
-    def SaveState2(self):
+    def SaveState2(self): # Save Interface State to Save State 2
         self.GPD_4303S_RM.write("SAV2")
         self.textEditMSG.setText("SAVED TO STATE2")
         self.SavedSettings[1] = self.ChannelSettings.copy()
     
-    def SaveState3(self):
+    def SaveState3(self): # Save Interface State to Save State 3
         self.GPD_4303S_RM.write("SAV3")
         self.textEditMSG.setText("SAVED TO STATE3")
         self.SavedSettings[2] = self.ChannelSettings.copy()
 
-    def SaveState4(self):
+    def SaveState4(self): # Save Interface State to Save State 4
         self.GPD_4303S_RM.write("SAV4")
         self.textEditMSG.setText("SAVED TO STATE4")
         self.SavedSettings[3] = self.ChannelSettings.copy()
 
-    def PSReset(self): # set both the amp limit setting and voltage setting for all channels to zero
-        if(self.PSstate["Output"] == "ON"): # On exit, if power supply is on, turn off output
+    def PSReset(self): # Set Amp limit and voltage settings to zero
+        if(self.PSstate["Output"] == "ON"): # If power supply is on, turn it off
             self.OutputToggle()
-        self.GPD_4303S_RM.write("ISET1:0") # Set All Current and Voltage Channels to Zero
+        self.GPD_4303S_RM.write("ISET1:0")
         self.GPD_4303S_RM.write("ISET2:0")
         self.GPD_4303S_RM.write("ISET3:0")
         self.GPD_4303S_RM.write("ISET4:0")
@@ -160,7 +164,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.UpdateSettingInterface()
         self.UpdateState()
 
-    def A1Set(self):
+    def A1Set(self): # Set current limit from user input for channel 1
         UserInput = self.lineEditA1IN.text()
         self.lineEditA1IN.clear()
         self.textEditMSG.setText("SET A1")
@@ -174,7 +178,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid A1 Input")
     
-    def A2Set(self):
+    def A2Set(self):  # Set current limit from user input for channel 2
         UserInput = self.lineEditA2IN.text()
         self.lineEditA2IN.clear()
         self.textEditMSG.setText("SET A3")
@@ -188,7 +192,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid A2 Input")
 
-    def A3Set(self):
+    def A3Set(self):  # Set current limit from user input for channel 3
         UserInput = self.lineEditA3IN.text()
         self.lineEditA3IN.clear()
         self.textEditMSG.setText("SET A3")
@@ -202,7 +206,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid A3 Input")
 
-    def A4Set(self):
+    def A4Set(self):  # Set current limit from user input for channel 4
         UserInput = self.lineEditA4IN.text()
         self.lineEditA4IN.clear()
         self.textEditMSG.setText("SET A4")
@@ -216,7 +220,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid A4 Input")
 
-    def V1Set(self):
+    def V1Set(self):  # Set voltage setting from user input for channel 1
         UserInput = self.lineEditV1IN.text()
         self.lineEditV1IN.clear()
         self.textEditMSG.setText("SET V1")
@@ -230,7 +234,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid V1 Input")
 
-    def V2Set(self):
+    def V2Set(self): # Set voltage setting from user input for channel 2
         UserInput = self.lineEditV2IN.text()
         self.lineEditV2IN.clear()
         self.textEditMSG.setText("SET V2")
@@ -244,7 +248,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid V2 Input")
 
-    def V3Set(self):
+    def V3Set(self): # Set voltage setting from user input for channel 3
         UserInput = self.lineEditV3IN.text()
         self.lineEditV3IN.clear()
         self.textEditMSG.setText("SET V3")
@@ -258,7 +262,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid V3 Input")
 
-    def V4Set(self):
+    def V4Set(self): # Set voltage setting from user input for channel 4
         UserInput = self.lineEditV4IN.text()
         self.lineEditV4IN.clear()
         self.textEditMSG.setText("SET V4")
@@ -272,7 +276,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         except:
             self.textEditMSG.setText("Invalid V4 Input")
 
-    def UpdateSettingInterface(self):
+    def UpdateSettingInterface(self): # Write channel setting to user interface
         self.lineEditV1.setText(str(self.ChannelSettings["V1"]))
         self.lineEditV2.setText(str(self.ChannelSettings["V2"]))
         self.lineEditV3.setText(str(self.ChannelSettings["V3"]))
@@ -282,7 +286,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.lineEditA3.setText(str(self.ChannelSettings["A3"]))
         self.lineEditA4.setText(str(self.ChannelSettings["A4"]))
 
-    def OutputToggle(self):
+    def OutputToggle(self): # Write toggle output and start/stop peroidic reading of the channel measurements
         if(self.PSstate["Output"] == "OFF"):
             self.GPD_4303S_RM.write("OUT1")
             self.timer.start(1000)
@@ -294,7 +298,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             self.UpdateSettingInterface()
         self.ReadState()
 
-    def MeasureOutputs(self):
+    def MeasureOutputs(self): # Measure the current output of each channel, send it directly to the user interface
         Voltage1 = self.GPD_4303S_RM.query("VOUT1?")[:-3]
         Voltage2 = self.GPD_4303S_RM.query("VOUT2?")[:-3]
         Voltage3 = self.GPD_4303S_RM.query("VOUT3?")[:-3]
@@ -312,7 +316,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.lineEditA3.setText(str(Current3))
         self.lineEditA4.setText(str(Current4))
     
-    def ReadState(self):
+    def ReadState(self): # Get power supply status setting through the conversion of a byte of data
         Status = self.GPD_4303S_RM.query('STATUS?')
         # Power Supply Channel Control Mode Status
         if(int(Status[0]) == 1):
@@ -355,7 +359,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             self.PSstate["BaudRate"] = "9600"
         self.UpdateState()
 
-    def IdentifyPS(self):
+    def IdentifyPS(self): # Identify the connected power supply and write it to the status dictionary
         IDN = self.GPD_4303S_RM.query('*IDN?')
         Split_IDN = str(IDN).split(",")
         Split_IDN[2] = Split_IDN[2][3:] # Remove Extra Characters
@@ -366,7 +370,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.PSstate["FWVer"] = Split_IDN[3]
         self.UpdateState("IDN")
 
-    def UpdateState(self,Update="State"):
+    def UpdateState(self,Update="State"): # Update the state or the IDN depending on the input (State is updated much more often)
         if(Update == "State"):
             self.tableWidget.setItem(0,1,QtWidgets.QTableWidgetItem(self.PSstate["Output"])) # Output State
             self.tableWidget.setItem(1,1,QtWidgets.QTableWidgetItem(self.PSstate["C1CCCV"])) # C1 CC/CV
