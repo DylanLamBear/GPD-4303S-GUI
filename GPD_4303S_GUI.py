@@ -35,7 +35,6 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.RM = pyvisa.ResourceManager("@py")
         self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR')
         self.GPD_4303S_RM.baud_rate = 115200
-        self.GPD_4303S_RM.query_delay = 0.01
         self.ReadState() # Read Out Information About the connected GPD-4303S power supply
         self.IdentifyPS()
         self.ReadMemSetting()
