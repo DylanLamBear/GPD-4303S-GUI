@@ -2,13 +2,12 @@
 Name: GPD-4303S-GUI.py
 Created: 3/18/2024
 Author: Dylan Lambert
-Purpose: Create backend code for a GUI the allows for digital interfacing with the GPD-4303S power supplies
+Purpose: Create backend code for a PyQt GUI the allows for digital interfacing with the GPD-X303S power supplies listed here: https://www.gwinstek.com/en-global/products/detail/GPD-Series
 """
 
 """
-Other Python Modules To Install Beyond (PyVISA, PyVISA-py, PyUSB) (Likely will need zeroconf, but try all)
+Other Python Modules To Install Beyond (PyVISA, PyVISA-py, PyUSB) (Likely will need zeroconf)
 - PySerial (to interface with Serial instruments)
-- PyUSB (to interface with USB instruments)
 - linux-gpib (to interface with gpib instruments, only on linux)
 - gpib-ctypes (to interface with GPIB instruments on Windows and Linux)
 - psutil (to discover TCPIP devices across multiple interfaces)
@@ -17,10 +16,8 @@ Other Python Modules To Install Beyond (PyVISA, PyVISA-py, PyUSB) (Likely will n
 """
 
 import sys
-import time
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import QThread, QObject, pyqtSignal, QTimer
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtCore import QTimer
 import pyvisa
 import GPD_4303S_GUI_UI
 
@@ -32,7 +29,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.ChannelSettings = {} # Current state of the power supply channel, will be initalized
         self.SavedSettings = [{},{},{},{}] # Create a lit of dictionaries that is the saved memory settings, will fill with data read from power supply
         self.setupUi(self)
-        self.RM = pyvisa.ResourceManager("@py") # VISA wrapper intstance
+        self.RM = pyvisa.ResourceManager("@py") # PyVISA wrapper intstance for PyVISA-py
         #print(self.RM.list_resources) # use this to find out what resource your computer has designated the power supply to
         self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR') # What I found the power supply I was working on would show up for me (likely different for you)
         self.GPD_4303S_RM.baud_rate = 115200 # If you are starting new, you will likely have to change this value (Possible Values: 9600, 57600, 115200)
