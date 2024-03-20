@@ -18,7 +18,6 @@ Other Python Modules To Install Beyond (PyVISA, PyVISA-py, PyUSB) (Likely will n
 
 import sys
 import time
-import threading
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import QThread, QObject, pyqtSignal, QTimer
 from PyQt6.QtGui import QCloseEvent
@@ -36,8 +35,10 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.RM = pyvisa.ResourceManager("@py")
         self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR')
         self.GPD_4303S_RM.baud_rate = 115200
+        self.GPD_4303S_RM.query_delay = 0.01
         self.ReadState() # Read Out Information About the connected GPD-4303S power supply
         self.IdentifyPS()
+        self.ReadMemSetting()
         self.PSReset() # Channel Settings Initialized Here
         self.UpdateSettingInterface()
         self.timer = QTimer(self)
@@ -52,6 +53,8 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.actionLoad_State_2.triggered.connect(self.LoadState2)
         self.actionLoad_State_3.triggered.connect(self.LoadState3)
         self.actionLoad_State_4.triggered.connect(self.LoadState4)
+        self.action_ToggleBeep.triggered.connect(self.BeepToggle)
+        self.actionToggleTracking.triggered.connect(self.TrackingChange)
         self.actionReset.triggered.connect(self.PSReset)
         self.pushButtonV1Set.clicked.connect(self.V1Set)
         self.pushButtonV2Set.clicked.connect(self.V2Set)
@@ -62,6 +65,36 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.pushButtonA3Set.clicked.connect(self.A3Set)
         self.pushButtonA4Set.clicked.connect(self.A4Set)
 
+    def TrackingChange(self):
+        if(self.PSstate["Track"] == "Independent"):
+            self.GPD_4303S_RM.write("TRACK1")
+        elif(self.PSstate["Track"] == "Series"):
+            self.GPD_4303S_RM.write("TRACK2")
+        elif(self.PSstate["Track"] == "Parallel"):
+            self.GPD_4303S_RM.write("TRACK0")
+        else:
+            self.textEditMSG.setText("WAIT WHAT?")
+        self.ReadState()
+    
+    def BeepToggle(self):
+        if(self.PSstate["Beep"] == "OFF"):
+            self.GPD_4303S_RM.write("BEEP1")
+        elif(self.PSstate["Beep"] == "ON"):
+            self.GPD_4303S_RM.write("BEEP0")
+        self.ReadState()
+
+    def ReadMemSetting(self):
+        for i in range(1,5):
+            self.GPD_4303S_RM.write("RCL" + str(i))
+            self.SavedSettings[i-1]["V1"] = float(self.GPD_4303S_RM.query("VSET1?")[:-3])
+            self.SavedSettings[i-1]["V2"] = float(self.GPD_4303S_RM.query("VSET2?")[:-3])
+            self.SavedSettings[i-1]["V3"] = float(self.GPD_4303S_RM.query("VSET3?")[:-3])
+            self.SavedSettings[i-1]["V4"] = float(self.GPD_4303S_RM.query("VSET4?")[:-3])
+            self.SavedSettings[i-1]["A1"] = float(self.GPD_4303S_RM.query("ISET1?")[:-3])
+            self.SavedSettings[i-1]["A2"] = float(self.GPD_4303S_RM.query("ISET2?")[:-3])
+            self.SavedSettings[i-1]["A3"] = float(self.GPD_4303S_RM.query("ISET3?")[:-3])
+            self.SavedSettings[i-1]["A4"] = float(self.GPD_4303S_RM.query("ISET4?")[:-3])
+        
     def LoadState1(self):
         self.GPD_4303S_RM.write("RCL1")
         self.textEditMSG.setText("LOADED STATE1")
@@ -263,14 +296,14 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.ReadState()
 
     def MeasureOutputs(self):
-        Voltage1 = self.GPD_4303S_RM.query("VOUT1?")[:5]
-        Voltage2 = self.GPD_4303S_RM.query("VOUT2?")[:5]
-        Voltage3 = self.GPD_4303S_RM.query("VOUT3?")[:5]
-        Voltage4 = self.GPD_4303S_RM.query("VOUT4?")[:5]
-        Current1 = self.GPD_4303S_RM.query("IOUT1?")[:5]
-        Current2 = self.GPD_4303S_RM.query("IOUT2?")[:5]
-        Current3 = self.GPD_4303S_RM.query("IOUT3?")[:5]
-        Current4 = self.GPD_4303S_RM.query("IOUT4?")[:5]
+        Voltage1 = self.GPD_4303S_RM.query("VOUT1?")[:-3]
+        Voltage2 = self.GPD_4303S_RM.query("VOUT2?")[:-3]
+        Voltage3 = self.GPD_4303S_RM.query("VOUT3?")[:-3]
+        Voltage4 = self.GPD_4303S_RM.query("VOUT4?")[:-3]
+        Current1 = self.GPD_4303S_RM.query("IOUT1?")[:-3]
+        Current2 = self.GPD_4303S_RM.query("IOUT2?")[:-3]
+        Current3 = self.GPD_4303S_RM.query("IOUT3?")[:-3]
+        Current4 = self.GPD_4303S_RM.query("IOUT4?")[:-3]
         self.lineEditV1.setText(str(Voltage1))
         self.lineEditV2.setText(str(Voltage2))
         self.lineEditV3.setText(str(Voltage3))
