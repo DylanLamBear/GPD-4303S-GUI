@@ -30,7 +30,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.SavedSettings = [{},{},{},{}] # Create a lit of dictionaries that is the saved memory settings, will fill with data read from power supply
         self.setupUi(self)
         self.RM = pyvisa.ResourceManager("@py") # PyVISA wrapper intstance for PyVISA-py
-        #print(self.RM.list_resources) # use this to find out what resource your computer has designated the power supply to
+        #print(self.RM.list_resources()) # use this to find out what resource your computer has designated the power supply to
         self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR') # What I found the power supply I was working on would show up for me (likely different for you)
         self.GPD_4303S_RM.baud_rate = 115200 # If you are starting new, you will likely have to change this value (Possible Values: 9600, 57600, 115200)
         # To modify the baud rate you need to use the current baud rate (Try each of the 3 setting) to set a new baudrate (BAUD0 = 115200, BAUD1 = 57600, BAUD2 = 9600) with the command commented out below
