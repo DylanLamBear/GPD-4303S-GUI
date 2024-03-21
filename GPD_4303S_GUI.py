@@ -31,11 +31,11 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.setupUi(self)
         self.RM = pyvisa.ResourceManager("@py") # PyVISA wrapper intstance for PyVISA-py
         #print(self.RM.list_resources()) # use this to find out what resource your computer has designated the power supply to
-        self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR') # What I found the power supply I was working on would show up for me (likely different for you)
-        self.GPD_4303S_RM.baud_rate = 115200 # If you are starting new, you will likely have to change this value (Possible Values: 9600, 57600, 115200)
+        self.GPD_4303S_RM = self.RM.open_resource('ASRL4::INSTR') # What COM port I found the power supply I was developing on was connected to (likely different for you, I found it was random through exploring the other power supplies of the same model in my lab)
+        self.GPD_4303S_RM.baud_rate = 115200 # If you are starting new, you will likely have to change this value (Possible Values: 9600, 57600, 115200 , Default is 9600)
         # To modify the baud rate you need to use the current baud rate (Try each of the 3 setting) to set a new baudrate (BAUD0 = 115200, BAUD1 = 57600, BAUD2 = 9600) with the command commented out below
-        # changing the baud rate will disconnect the instance. Once you have changed the baud rate you need to start a new instance with the above ^ ".baudrate = New Baud Rate"
-        #self.GPD_4303S_RM.write("BAUD0") 
+        # changing the baud rate will disconnect the instance. Once you have changed the baud rate you need to start a new instance using the baud rate you set with the above ^ ".baudrate = New Baud Rate"
+        #self.GPD_4303S_RM.write("BAUD0") # comment this line out once you have modified you own power supplies initial setting for baud rate
         self.ReadState() # Read Out status information about the connected GPD-4303S power supply
         self.IdentifyPS() # Read out indentifying information about the connected GPD-4303S power supply
         self.ReadMemSetting() # Read Memory settings to grab the memory states already on the power supply
