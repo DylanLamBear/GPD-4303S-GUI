@@ -98,24 +98,36 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
     def LoadState1(self): # Load State 1 and Send to Interface
         self.GPD_4303S_RM.write("RCL1")
         self.textEditMSG.setText("LOADED STATE1")
+        if(self.PSstate["Output"] == "ON"): # When loading a new state and outputting the output will stop
+            self.timer.stop()
+            self.ReadState()
         self.ChannelSettings = self.SavedSettings[0].copy()
         self.UpdateSettingInterface()
 
     def LoadState2(self): # Load State 2 and Send to Interface
         self.GPD_4303S_RM.write("RCL2")
         self.textEditMSG.setText("LOADED STATE2")
+        if(self.PSstate["Output"] == "ON"): # When loading a new state and outputting the output will stop
+            self.timer.stop()
+            self.ReadState()
         self.ChannelSettings = self.SavedSettings[1].copy()
         self.UpdateSettingInterface()
 
     def LoadState3(self): # Load State 3 and Send to Interface
         self.GPD_4303S_RM.write("RCL3")
         self.textEditMSG.setText("LOADED STATE3")
+        if(self.PSstate["Output"] == "ON"): # When loading a new state and outputting the output will stop
+            self.timer.stop()
+            self.ReadState()
         self.ChannelSettings = self.SavedSettings[2].copy()
         self.UpdateSettingInterface()
 
     def LoadState4(self): # Load State 4 and Send to Interface
         self.GPD_4303S_RM.write("RCL4")
         self.textEditMSG.setText("LOADED STATE4")
+        if(self.PSstate["Output"] == "ON"): # When loading a new state and outputting the output will stop
+            self.timer.stop()
+            self.ReadState()
         self.ChannelSettings = self.SavedSettings[3].copy()
         self.UpdateSettingInterface()
 
