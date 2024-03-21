@@ -3,7 +3,7 @@ A GUI interface implemented with PyQt6 & PyVISA for remote digital control of th
 
 From experience, the Windows USB driver paired with this program using Python 3.13.2 & PyQt 6.6.1 will work on a Windows 10 machine as this is what I developed this on. On the GW Instek product page for the GPD-X303S the driver says there is support for Windows Vista, Vista can only use up to Python 3.7, as for PyQt6 support on Python 3.7 and below that would have to be looked into if the need arises.
 
-This GUI will initially read your saved memory states on the GPD-4303S and load them into its memory so that the interface can imitate what the display of the 4303S will show when you ask for one of the states to be loaded.
+This GUI will initially read your saved memory states on the GPD-4303S and load them into its memory so that the interface can imitate what the display of the 4303S power supply when you ask for one of the states to be loaded.
 
 # Setup
 1. There will be a little bit of setup to do on your part, firstly you need to make sure your OS is a version of Windows 10, the version of Python you will need will be any 3.12.X version or a PyQt6 compatible Python version, and you will need to install the USB drivers listed on this page https://www.gwinstek.com/en-global/products/detail/GPD-Series.
