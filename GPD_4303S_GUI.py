@@ -22,7 +22,8 @@ import pyvisa
 import GPD_4303S_GUI_UI_Small as GPD_4303S_GUI_UI # If you want to use the smaller GUI (built for 720p) that is included switch out the left side of the import for GPD_4303S_GUI_UI with GPD_4303S_GUI_UI_Small
 
 class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
-    def __init__(self):
+    def __init__(self, Resource="ASRL6::INSTR"):
+        print(Resource)
         super().__init__()
         self.PSstate = {} # No need to initalize, the power supply will tell us this
         self.ChannelSettings = {} # Current state of the power supply channel, will be initalized
@@ -30,7 +31,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
         self.setupUi(self)
         self.RM = pyvisa.ResourceManager("@py") # PyVISA wrapper intstance for PyVISA-py
         print(self.RM.list_resources()) # use this to find out what resource your computer has designated the power supply to
-        self.GPD_4303S_RM = self.RM.open_resource("ASRL6::INSTR") # What COM port I found the power supply I was developing on was connected to (likely different for you, I found it was random through exploring the other power supplies of the same model in my lab)
+        self.GPD_4303S_RM = self.RM.open_resource(Resource) # What COM port I found the power supply I was developing on was connected to (likely different for you, I found it was random through exploring the other power supplies of the same model in my lab)
         self.GPD_4303S_RM.baud_rate = 115200 # If you are starting new, you will likely have to change this value (Possible Values: 9600, 57600, 115200 , Default is 9600)
         # To modify the baud rate you need to use the current baud rate (Try each of the 3 setting) to set a new baudrate (BAUD0 = 115200, BAUD1 = 57600, BAUD2 = 9600) with the command commented out below
         # changing the baud rate will disconnect the instance. Once you have changed the baud rate you need to start a new instance using the baud rate you set with the above ^ ".baudrate = New Baud Rate"
@@ -297,7 +298,7 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
     def OutputToggle(self): # Write toggle output and start/stop peroidic reading of the channel measurements
         if(self.PSstate["Output"] == "OFF"):
             self.GPD_4303S_RM.write("OUT1")
-            self.timer.start(1000) # Time Between Recording Current Outputs (ms)
+            self.timer.start(60000) # Time Between Recording Current Outputs (ms)
             self.textEditMSG.setText("Output ON")
         elif(self.PSstate["Output"] == "ON"):
             self.GPD_4303S_RM.write("OUT0")
@@ -406,6 +407,8 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
 
 if __name__=="__main__": # Send application to computer, wait for user exit
     app = QtWidgets.QApplication(sys.argv) 
-    GPD_4303S_INST = GPD_4303S()
-    GPD_4303S_INST.show()
+    GPD_4303S_INST1 = GPD_4303S("ASRL6::INSTR")
+    GPD_4303S_INST1.show()
+    GPD_4303S_INST2 = GPD_4303S("ASRL4::INSTR")
+    GPD_4303S_INST2.show()
     sys.exit(app.exec())
