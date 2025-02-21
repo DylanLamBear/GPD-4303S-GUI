@@ -19,7 +19,7 @@ import sys
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import QTimer
 import pyvisa
-import GPD_4303S_GUI_UI as GPD_4303S_GUI_UI # If you want to use the smaller GUI (built for 720p) that is included switch out the left side of the import for GPD_4303S_GUI_UI with GPD_4303S_GUI_UI_Small
+import GPD_4303S_GUI_UI_Small as GPD_4303S_GUI_UI # If you want to use the smaller GUI (built for 720p) that is included switch out the left side of the import for GPD_4303S_GUI_UI with GPD_4303S_GUI_UI_Small
 
 class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
     def __init__(self):
