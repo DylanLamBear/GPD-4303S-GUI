@@ -18,6 +18,8 @@ Other Python Modules To Install Beyond (PyVISA, PyVISA-py, PyUSB) (Likely will n
 import sys
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import QTimer
+from datetime import datetime
+import csv
 import pyvisa
 import GPD_4303S_GUI_UI_Small as GPD_4303S_GUI_UI # If you want to use the smaller GUI (built for 720p) that is included switch out the left side of the import for GPD_4303S_GUI_UI with GPD_4303S_GUI_UI_Small
 
@@ -391,6 +393,16 @@ class GPD_4303S(QtWidgets.QMainWindow, GPD_4303S_GUI_UI.Ui_MainWindow):
             self.lineEditA2.setText(str(Current2))
             self.lineEditA3.setText(str(Current3))
             self.lineEditA4.setText(str(Current4))
+            # Timestamp with milliseconds for precision
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            data_row = [
+                timestamp, Voltage1, Voltage2, Voltage3, Voltage4,
+                Current1, Current2, Current3, Current4
+            ]
+            # Open the file in append mode and write the new data row
+            with open("GPD_4303S_Log_" + str(self.PSstate["SN"]) + ".csv", mode='a', newline='') as log_file:
+                csv_writer = csv.writer(log_file)
+                csv_writer.writerow(data_row)
         except Exception as e:
             self.textEditMSG.setText(f"Error measuring outputs: {e}")
             self.timer.stop() # Stop timer if measurement fails to prevent repeated errors
